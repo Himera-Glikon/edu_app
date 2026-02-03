@@ -1,0 +1,76 @@
+name: Flutter Android Signed Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  signed-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Create keystore directory
+        run: mkdir -p android/keystore
+
+      - name: Create keystore from base64
+        run: echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > android/keystore/eduapp.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=../keystore/eduapp.jks
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Signed Release APK
+        run: flutter build apk --release --build-number=${{ github.event.inputs.version }}
+
+      - name: Build Signed App Bundle (AAB)
+        run: flutter build appbundle --release --build-number=${{ github.event.inputs.version }}
+
+      - name: Upload Signed Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-release-apk-v${{ github.event.inputs.version }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload Signed App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-app-bundle-v${{ github.event.inputs.version }}
+          path: build/app/outputs/bundle/release/app-release.aab
+
+      - name: Create Release on GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          body: |
+            ## Android Build
+            - Release APK
+            - App Bundle (AAB) for Google Play
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
