@@ -1,10 +1,8 @@
-name: Flutter Android CI/CD
+name: Flutter Android Build
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -21,7 +19,6 @@ jobs:
         with:
           flutter-version: '3.19.0'
           channel: 'stable'
-          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -29,42 +26,8 @@ jobs:
       - name: Build Debug APK
         run: flutter build apk --debug
 
-      - name: Build Release APK
-        run: flutter build apk --release
-
-      - name: Build App Bundle (AAB)
-        run: flutter build appbundle --release
-
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: edu_app-debug.apk
           path: build/app/outputs/flutter-apk/app-debug.apk
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Upload App Bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-bundle
-          path: build/app/outputs/bundle/release/app-release.aab
-
-      - name: Upload Build Outputs
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-outputs
-          path: build/
-
-      - name: Create Release
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
