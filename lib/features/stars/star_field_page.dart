@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'dart:math' as math;
 import 'dart:async';
 
@@ -12,7 +13,7 @@ class StarFieldPage extends StatefulWidget {
 class _StarFieldPageState extends State<StarFieldPage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final List<Star> _stars = [];
-  final Random _random = Random();
+  final math.Random _random = math.Random();
   Offset _mousePosition = Offset.zero;
 
   @override
@@ -80,7 +81,7 @@ class Star {
     required this.opacity,
   });
 
-  factory Star.random(Random random) {
+  factory Star.random(math.Random random) {
     return Star(
       x: random.nextDouble(),
       y: random.nextDouble(),

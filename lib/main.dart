@@ -65,7 +65,7 @@ mixin PageTransitionMixin on PageRoute {
       Animation<double> secondaryAnimation) {
     return FadeTransition(
       opacity: animation,
-      child: secondaryAnimation,
+      child: secondaryAnimation as Widget,
     );
   }
 }
